@@ -39,7 +39,7 @@ class CursorMacMCPConfigEditor(ConfigUpdater):
     def _mint_proxy_already_installed(self) -> bool:
         pass
 
-    def create_config(self) -> bool:
+    def update_config(self) -> bool:
         pass
 
     def update_config(self) -> bool:

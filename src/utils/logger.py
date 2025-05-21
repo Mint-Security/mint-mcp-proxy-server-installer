@@ -51,6 +51,3 @@ def configure_logger(level=None):
 def get_logger(name):
     """Get a logger with the specified name."""
     return logging.getLogger(name)
-
-# Initialize logger with default configuration (OFF)
-configure_logger() 

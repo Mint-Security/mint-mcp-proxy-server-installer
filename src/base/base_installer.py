@@ -150,7 +150,7 @@ class BaseInstaller(ABC):
         # update the config json of the target application
         logger.info("Creating configuration...")
         try:
-            config_result = self.config_creator.create_config()
+            config_result = self.config_creator.update_config()
             logger.debug(f"Configuration creation result: {config_result}")
         except Exception as e:
             logger.error(f"Error creating configuration: {e}")
