@@ -18,24 +18,7 @@ class AppName:
     WINDSURF = "windsurf"
 
 DOWNLOAD_URLS = {
-    AppName.CURSOR: {
-        PlatformName.MAC: "https://wsrzmzgrflfrgovxedjl.supabase.co/storage/v1/object/public/storage//mint-mcp-proxy-server-0.1.0.tgz",
-        PlatformName.LINUX: "mint-mcp-proxy-server-0.1.0.tgz",
-        PlatformName.WINDOWS: "mint-mcp-proxy-server-0.1.0.tgz"
-    },
-    AppName.CLAUDE_CODE: {
-        PlatformName.MAC: "https://wsrzmzgrflfrgovxedjl.supabase.co/storage/v1/object/public/storage//mint-mcp-proxy-server-0.1.0.tgz",
-        PlatformName.LINUX: "mint-mcp-proxy-server-0.1.0.tgz",
-        PlatformName.WINDOWS: "mint-mcp-proxy-server-0.1.0.tgz"
-    },
-    AppName.CLAUDE_DESKTOP: {
-        PlatformName.MAC: "https://wsrzmzgrflfrgovxedjl.supabase.co/storage/v1/object/public/storage//mint-mcp-proxy-server-0.1.0.tgz",
-        PlatformName.LINUX: "mint-mcp-proxy-server-0.1.0.tgz",
-        PlatformName.WINDOWS: "mint-mcp-proxy-server-0.1.0.tgz"
-    },
-    AppName.WINDSURF: {
-        PlatformName.MAC: "https://wsrzmzgrflfrgovxedjl.supabase.co/storage/v1/object/public/storage//mint-mcp-proxy-server-0.1.0.tgz",
-        PlatformName.LINUX: "mint-mcp-proxy-server-0.1.0.tgz",
-        PlatformName.WINDOWS: "mint-mcp-proxy-server-0.1.0.tgz"
-    }
+    PlatformName.MAC: "https://wsrzmzgrflfrgovxedjl.supabase.co/storage/v1/object/public/storage//mint-mcp-proxy-server-0.1.0.tgz",
+    PlatformName.LINUX: "UNSUPPORTED",
+    PlatformName.WINDOWS: "UNSUPPORTED"
 }

@@ -20,11 +20,11 @@ class ClaudeDesktopMacInstaller(BaseInstaller):
 
     PLATFORM_NAME = PlatformName.MAC
     APP_NAME = AppName.CLAUDE_DESKTOP
+    CONFIG_FILE_PATH = "~/Library/Application Support/Claude/claude_desktop_config.json"
 
     def validate(self) -> bool:
-        valid_os = get_current_os() == OperatingSystem.MAC
-        if not valid_os:
-            print(f"the os is not valid expected {OperatingSystem.MAC} but got {get_current_os()}")
+        is_valid = super().validate()
+        if not is_valid:
             return False
         
         # Check if Claude Desktop is installed

@@ -6,9 +6,9 @@ from src.installers.cursor.mac.installer import CursorMacInstaller
 from src.installers.claude_desktop.mac.installer import ClaudeDesktopMacInstaller
 from src.installers.claude_code.mac.installer import ClaudeCodeMacInstaller
 from src.installers.windsurf.mac.installer import WindsurfMacInstaller
-from src.consts import UNINSTALL_FOLDERS
+from src.base.base_installer import BaseInstaller
 from src.utils.logger import configure_logger, LogLevel, get_logger
-
+from src.consts import DOWNLOAD_URLS, PlatformName
 # Create a logger for this module
 logger = get_logger(__name__)
 
@@ -84,13 +84,16 @@ def uninstall_all(os_type):
     os_key = os_type.name.lower()
     print("\nUninstalling all applications...")
         
+    # Uninstall application
+    BaseInstaller.uninstall_application()
+
     # Then proceed with application uninstallation
     for app, os_map in installer_objects.items():
         try:
             installer = os_map.get(os_key)
             if installer:
                 print(f"Uninstalling {app.replace('-', ' ').title()}...")
-                if installer.run_uninstallation():
+                if installer.run_client_uninstallation():
                     print(f"Successfully uninstalled {app.replace('-', ' ').title()}")
                 else:
                     print(f"Failed to uninstall {app.replace('-', ' ').title()}")
@@ -98,7 +101,7 @@ def uninstall_all(os_type):
             print(f"Error uninstalling {app}: {e}")
 
     # Remove the installation folders
-    if installer.remove_installation_folders():
+    if BaseInstaller.remove_installation_folders():
         print("Installation folders removed successfully")
     else:
         print("Failed to remove installation folders")
@@ -132,6 +135,14 @@ def main():
             sys.exit(1)
         os_key = os_type.name.lower()
         
+        # Download the application
+        download_file_path = BaseInstaller.download_application(DOWNLOAD_URLS[PlatformName.MAC])
+        if not download_file_path:
+            sys.exit(1)
+
+        # Install the application (npm package of mint-mcp-proxy-server)
+        BaseInstaller.install_application(download_file_path)
+
         #"Install on All" option removed as there's only one option now
         if selection == "Install on All":
             for app, os_map in installer_objects.items():
@@ -139,7 +150,7 @@ def main():
                     installer = os_map.get(os_key)
                     if installer:
                         print(f"Running installation for {app.replace('-', ' ').title()} on {os_type.name}")
-                        installer.run_installation()
+                        installer.run_client_installation()
                         print(f"Installation for {app.replace('-', ' ').title()} on {os_type.name} completed")
                 except Exception as e:
                     print(f"Error installing {app} on {os_type.name}: {e}")
@@ -149,7 +160,7 @@ def main():
                 installer = installer_objects.get(app_key, {}).get(os_key)
                 if installer:
                     print(f"Running installation for {selection} on {os_type.name}")
-                    installer.run_installation()
+                    installer.run_client_installation()
                     print(f"Installation for {selection} on {os_type.name} completed")
                 else:
                     print(f"No installer available for {selection} on {os_type.name}")

@@ -21,11 +21,11 @@ class ClaudeCodeMacInstaller(BaseInstaller):
 
     PLATFORM_NAME = PlatformName.MAC
     APP_NAME = AppName.CLAUDE_CODE
+    CONFIG_FILE_PATH = "~/.claude.json"
 
     def validate(self) -> bool:
-        valid_os = get_current_os() == OperatingSystem.MAC
-        if not valid_os:
-            print(f"The OS is not valid expected {OperatingSystem.MAC} but got {get_current_os()}")
+        is_valid = super().validate()
+        if not is_valid:
             return False
         
         # Check if Claude Code is installed
@@ -37,7 +37,7 @@ class ClaudeCodeMacInstaller(BaseInstaller):
             print(f"Claude Code is not installed {claude_code_installed_path1} {claude_code_installed_path2}")
             return False
         
-        return True
+        return True    
 
     def kill_process(self) -> bool:
         try:

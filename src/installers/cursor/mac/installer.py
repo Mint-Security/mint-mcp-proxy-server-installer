@@ -21,11 +21,11 @@ class CursorMacInstaller(BaseInstaller):
 
     PLATFORM_NAME = PlatformName.MAC
     APP_NAME = AppName.CURSOR
+    CONFIG_FILE_PATH = "~/.cursor/mcp.json"
 
     def validate(self) -> bool:
-        vlaid_os = get_current_os() == OperatingSystem.MAC
-        if not vlaid_os:
-            print(f"the os is not valid expected {OperatingSystem.MAC} but got {get_current_os()}")
+        is_valid = super().validate()
+        if not is_valid:
             return False
         
         custom_path = "/usr/local/bin:" + os.environ.get("PATH", "")

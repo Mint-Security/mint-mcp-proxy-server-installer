@@ -1,5 +1,6 @@
 import time
 import os
+import json
 from abc import ABC, abstractmethod
 from typing import Dict, Any
 from .auto_run_enabler import AutoRunEnabler
@@ -10,6 +11,7 @@ from src.utils.downloader import download_file
 import subprocess
 from src.utils.logger import get_logger
 import shutil
+from src.utils.os_utils import get_current_os, OperatingSystem
 
 # Create a logger for this module
 logger = get_logger(__name__)
@@ -19,10 +21,12 @@ class BaseInstaller(ABC):
         self.config: Dict[str, Any] = {}
         self.auto_run_enabler = None
         self.config_creator = None
+
         logger.debug(f"Initialized BaseInstaller with empty config")
 
     PLATFORM_NAME: PlatformName
     APP_NAME: AppName
+    CONFIG_FILE_PATH: str
 
     def set_objects(self, auto_run_enabler: AutoRunEnabler, config_creator: ConfigCreator):
         try:
@@ -36,30 +40,37 @@ class BaseInstaller(ABC):
             logger.exception("Exception details:")
         
 
-    @abstractmethod
-    def validate(self) -> bool:
-        pass
 
+    def validate(self) -> bool:
+        vlaid_os = get_current_os() == OperatingSystem.MAC
+        if not vlaid_os:
+            print(f"the os is not valid expected {OperatingSystem.MAC} but got {get_current_os()}")
+            return False
+        return True
+        
     @abstractmethod
     def kill_process(self) -> bool:
         pass
 
-    def uninstall_application(self) -> bool:
-        try:
-            # install the application
-            logger.info(f"Uninstalling application: {APPLICATION_NAME}")
-            subprocess.run(["npm", "uninstall", "-g", APPLICATION_NAME])
+    @staticmethod
+    def uninstall_application() -> bool:
+        if BaseInstaller.is_application_installed():
+            try:
+                # install the application
+                logger.info(f"Uninstalling application: {APPLICATION_NAME}")
+                subprocess.run(["npm", "uninstall", "-g", APPLICATION_NAME])
 
-            # check if the application is installed
-            return not self.is_application_installed()
-        except Exception as e:
-            logger.error(f"Error uninstalling {APPLICATION_NAME}: {e}")
-            return False
+                # check if the application is installed
+                return not BaseInstaller.is_application_installed()
+            except Exception as e:
+                logger.error(f"Error uninstalling {APPLICATION_NAME}: {e}")
+                return False
 
-    def download_application(self) -> str:
+
+    @staticmethod
+    def download_application(download_url: str) -> str:
         try:
-            logger.debug(f"Starting download of application - APP_NAME: {self.APP_NAME}, PLATFORM_NAME: {self.PLATFORM_NAME}")
-            download_url = DOWNLOAD_URLS[self.APP_NAME][self.PLATFORM_NAME]
+            logger.debug(f"Starting download application")
             logger.debug(f"Download URL: {download_url}")
             application_name = download_url.split("/")[-1]
             logger.debug(f"Application name from URL: {application_name}")
@@ -85,8 +96,10 @@ class BaseInstaller(ABC):
             logger.exception("Exception details:")
             return ""
 
-    def install_application(self, download_file_path: str) -> bool:
+    @staticmethod
+    def install_application(download_file_path: str) -> bool:
         try:
+            download_file_path = BaseInstaller.download_application(DOWNLOAD_URLS[PlatformName.MAC])
             # install the application
             logger.info(f"Installing application from: {download_file_path}")
             result = subprocess.run(["npm", "install", "-g", download_file_path], capture_output=True, text=True)
@@ -95,7 +108,7 @@ class BaseInstaller(ABC):
             logger.debug(f"Installation stderr: {result.stderr}")
 
             # check if the application is installed
-            is_installed = self.is_application_installed()
+            is_installed = BaseInstaller.is_application_installed()
             logger.debug(f"Application is installed: {is_installed}")
             return is_installed
         except Exception as e:
@@ -103,7 +116,8 @@ class BaseInstaller(ABC):
             logger.exception("Exception details:")
             return False
 
-    def is_application_installed(self) -> bool:
+    @staticmethod
+    def is_application_installed() -> bool:
         try:
             logger.debug(f"Checking if {APPLICATION_NAME} is installed")
             whereis_result = subprocess.run(["whereis", APPLICATION_NAME], capture_output=True, text=True)
@@ -120,7 +134,30 @@ class BaseInstaller(ABC):
             logger.exception("Exception details:")
             return False
 
-    def run_installation(self) -> bool:
+    def is_client_installed(self) -> bool:
+        #Check is mint-mcp-proxy-server is installed in config file
+        config_file_path = os.path.expanduser(self.CONFIG_FILE_PATH)
+        if not os.path.exists(config_file_path):
+            logger.debug(f"{self.APP_NAME} is not installed")
+            return False
+        
+        #Check if the config file is valid
+        with open(config_file_path, "r") as f:
+            config = json.load(f)
+        
+        #if config include "mint-mcp-proxy-server" in the "clients" array
+        if "mint-mcp-proxy-server" in config.get("mcpServers", []):
+            logger.debug(f"{self.APP_NAME} is installed")
+            return True
+        
+        logger.debug(f"{self.APP_NAME} is not installed")
+        return False
+
+    def run_client_installation(self) -> bool:
+        if self.is_client_installed():
+            logger.info(f"{self.APP_NAME} is already installed")
+            return True
+        
         logger.info(f"Starting installation for {self.APP_NAME} on {self.PLATFORM_NAME}")
 
         # validate the application
@@ -128,20 +165,6 @@ class BaseInstaller(ABC):
             logger.error("Validation failed. Cannot proceed with installation.")
             raise ValueError("Validation failed. Cannot proceed with installation.")
         
-        # DO THIS ONE TIME FOR ALL APPLICATIONS (SINCE ALL USES THE SAME PACKAGE)
-        # TODO: REFACTOR THIS TO BE A SINGLE INSTALLATION FOR ALL APPLICATIONS
-        if not self.is_application_installed():
-            # download the application
-            download_file_path = self.download_application()
-            if not download_file_path:
-                logger.error("Download failed. Cannot proceed with installation.")
-                raise ValueError("Download failed. Cannot proceed with installation.")
-
-            # install the application
-            if not self.install_application(download_file_path):
-                logger.error("Installation failed. Cannot proceed with installation.")
-                raise ValueError("Installation failed. Cannot proceed with installation.")
-
         # kill the process to make sure it's not running
         if not self.kill_process():
             logger.error("Could not kill the process. Cannot proceed with installation.")
@@ -173,7 +196,11 @@ class BaseInstaller(ABC):
         logger.info("Installation completed successfully")
         return True
     
-    def run_uninstallation(self) -> bool:
+    def run_client_uninstallation(self) -> bool:
+        if not self.is_client_installed():
+            logger.info(f"{APPLICATION_NAME} is not installed")
+            return True
+        
         logger.info(f"Starting uninstallation for {self.APP_NAME} on {self.PLATFORM_NAME}")
         if not self.kill_process():
             logger.error("Could not kill the process. Cannot proceed with uninstallation.")
@@ -189,15 +216,11 @@ class BaseInstaller(ABC):
         self.config_creator.restore_config()
         time.sleep(0.5)
         
-        # uninstall the application
-        if self.is_application_installed():
-            logger.info("Uninstalling application...")
-            self.uninstall_application()
-        
         logger.info("Uninstallation completed successfully")
         return True
 
-    def remove_installation_folders(self) -> bool:
+    @staticmethod
+    def remove_installation_folders() -> bool:
         logger.info("\nRemoving installation folders...")
         for folder in UNINSTALL_FOLDERS:
             try:
