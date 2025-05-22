@@ -5,7 +5,7 @@ from src.utils.os_utils import get_current_os, OperatingSystem
 from src.utils.node_finder.mac import NodeFinderMac, NodeNotFoundError
 # from src.installers.cursor.mac.installer import CursorMacInstaller
 from src.installers.claude_desktop.mac.installer import ClaudeDesktopMacInstaller
-# from src.installers.claude_code.mac.installer import ClaudeCodeMacInstaller
+from src.installers.claude_code.mac.installer import ClaudeCodeMacInstaller
 # from src.installers.windsurf.mac.installer import WindsurfMacInstaller
 from src.consts import UNINSTALL_FOLDERS
 from src.utils.logger import configure_logger, LogLevel, get_logger
@@ -27,11 +27,11 @@ installer_objects = {
         "linux": None,
         "windows": None
     },
-    # "claude-code": {
-    #     "mac": ClaudeCodeMacInstaller(),
-    #     "linux": None,
-    #     "windows": None
-    # },
+    "claude-code": {
+        "mac": ClaudeCodeMacInstaller(),
+        "linux": None,
+        "windows": None
+    },
     # "windsurf": {
     #     "mac": WindsurfMacInstaller(),
     #     "linux": None,
@@ -65,6 +65,7 @@ def find_node(os_type):
 def print_menu():
     print("\nWhat would you like to install?")
     print("1. Claude Desktop")
+    print("2. Claude Code")
     # print("1. Cursor")
     # print("2. Claude Desktop")
     # print("3. Claude Code")
@@ -72,7 +73,7 @@ def print_menu():
     # print("5. Install on All")
 
 def get_user_selection():
-    options = {"1": "Claude Desktop"} # Simplified options
+    options = {"1": "Claude Desktop", "2": "Claude Code"} # Simplified options
     # options = {"1": "Cursor", "2": "Claude Desktop", "3": "Claude Code", "4": "Windsurf", "5": "Install on All"}
     choice = input("Enter the number of your choice: ").strip()
     selected = options.get(choice)
