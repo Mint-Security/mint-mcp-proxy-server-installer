@@ -1,12 +1,11 @@
 import sys
 import argparse
-from pathlib import Path
 from src.utils.os_utils import get_current_os, OperatingSystem
 from src.utils.node_finder.mac import NodeFinderMac, NodeNotFoundError
 from src.installers.cursor.mac.installer import CursorMacInstaller
 from src.installers.claude_desktop.mac.installer import ClaudeDesktopMacInstaller
 from src.installers.claude_code.mac.installer import ClaudeCodeMacInstaller
-# from src.installers.windsurf.mac.installer import WindsurfMacInstaller
+from src.installers.windsurf.mac.installer import WindsurfMacInstaller
 from src.consts import UNINSTALL_FOLDERS
 from src.utils.logger import configure_logger, LogLevel, get_logger
 
@@ -32,11 +31,11 @@ installer_objects = {
         "linux": None,
         "windows": None
     },
-    # "windsurf": {
-    #     "mac": WindsurfMacInstaller(),
-    #     "linux": None,
-    #     "windows": None
-    # }
+    "windsurf": {
+        "mac": WindsurfMacInstaller(),
+        "linux": None,
+        "windows": None
+    }
 }
 
 def detect_os():
@@ -67,12 +66,11 @@ def print_menu():
     print("1. Cursor")
     print("2. Claude Desktop")
     print("3. Claude Code")
-    # print("4. Windsurf")
-    # print("5. Install on All")
+    print("4. Windsurf")
+    print("5. Install on All")
 
 def get_user_selection():
-    options = {"1": "Cursor", "2": "Claude Desktop", "3": "Claude Code"} # Simplified options
-    # options = {"1": "Cursor", "2": "Claude Desktop", "3": "Claude Code", "4": "Windsurf", "5": "Install on All"}
+    options = {"1": "Cursor", "2": "Claude Desktop", "3": "Claude Code", "4": "Windsurf", "5": "Install on All"}
     choice = input("Enter the number of your choice: ").strip()
     selected = options.get(choice)
     if selected:
@@ -134,29 +132,29 @@ def main():
             sys.exit(1)
         os_key = os_type.name.lower()
         
-        # "Install on All" option removed as there's only one option now
-        # if selection == "Install on All":
-        #     for app, os_map in installer_objects.items():
-        #         try:
-        #             installer = os_map.get(os_key)
-        #             if installer:
-        #                 print(f"Running installation for {app.replace('-', ' ').title()} on {os_type.name}")
-        #                 installer.run_installation()
-        #                 print(f"Installation for {app.replace('-', ' ').title()} on {os_type.name} completed")
-        #         except Exception as e:
-        #             print(f"Error installing {app} on {os_type.name}: {e}")
-        # else:
-        try:
-            app_key = selection.lower().replace(' ', '-')
-            installer = installer_objects.get(app_key, {}).get(os_key)
-            if installer:
-                print(f"Running installation for {selection} on {os_type.name}")
-                installer.run_installation()
-                print(f"Installation for {selection} on {os_type.name} completed")
-            else:
-                print(f"No installer available for {selection} on {os_type.name}")
-        except Exception as e:
-            print(f"Error installing {selection} on {os_type.name}: {e}")
+        #"Install on All" option removed as there's only one option now
+        if selection == "Install on All":
+            for app, os_map in installer_objects.items():
+                try:
+                    installer = os_map.get(os_key)
+                    if installer:
+                        print(f"Running installation for {app.replace('-', ' ').title()} on {os_type.name}")
+                        installer.run_installation()
+                        print(f"Installation for {app.replace('-', ' ').title()} on {os_type.name} completed")
+                except Exception as e:
+                    print(f"Error installing {app} on {os_type.name}: {e}")
+        else:
+            try:
+                app_key = selection.lower().replace(' ', '-')
+                installer = installer_objects.get(app_key, {}).get(os_key)
+                if installer:
+                    print(f"Running installation for {selection} on {os_type.name}")
+                    installer.run_installation()
+                    print(f"Installation for {selection} on {os_type.name} completed")
+                else:
+                    print(f"No installer available for {selection} on {os_type.name}")
+            except Exception as e:
+                print(f"Error installing {selection} on {os_type.name}: {e}")
     except Exception as e:
         print(f"Error: {e}")
         sys.exit(1)

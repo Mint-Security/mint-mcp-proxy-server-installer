@@ -39,6 +39,7 @@ class WindsurfMacInstaller(BaseInstaller):
         
         return True
 
+    # Todo - fix to be generic and work on all OS
     def kill_process(self) -> bool:
         try:
             # killing the windsurf process before starting to run
