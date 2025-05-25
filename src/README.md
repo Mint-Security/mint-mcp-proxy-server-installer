@@ -1,7 +1,11 @@
 # Installer
 
+Install:
+1. Download and install the mint-mcp-proxy-server package
+2. Update the relevant config file of the relevant client
 
-1. find out os type
-2. download the source according to the installation type
-3. check if node is installed, optionally install manually
-3. run the relevant installer depending on what the user want's to install
+Uninstall:
+1. Uninstall the mint-mcp-proxy-server package
+2. Go over all supported client, check if we are installed, if yes - uninstall via updating the config not to include us.
+3. Remove all of our assets (log, package etc...)
+
