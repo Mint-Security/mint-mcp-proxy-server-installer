@@ -1,4 +1,4 @@
-APPLICATION_DIR_NAME = ".mint"
+APPLICATION_DIR_NAME = ".mint/mcp_proxy/"
 APPLICATION_NAME = "mint-mcp-proxy-server"
 
 # Folders to remove during uninstallation
