@@ -20,9 +20,12 @@ class ClaudeDesktopMacMCPConfigCreator(ConfigCreator):
         logger.debug("ClaudeDesktopMacMCPConfigCreator initialized")
         
     @property
+    def app_name(self) -> str:
+        return "Claude Desktop"
+
+    @property
     def config_file_path(self) -> str:
         logger.debug("config_file_path property called")
         return os.path.expanduser("~/Library/Application Support/Claude/claude_desktop_config.json")
-
 
         

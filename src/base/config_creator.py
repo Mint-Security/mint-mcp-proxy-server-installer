@@ -16,6 +16,12 @@ class ConfigCreator(ABC):
 
     @property
     @abstractmethod
+    def app_name(self) -> str:
+        """Name of the application. Must be implemented by subclasses."""
+        pass
+
+    @property
+    @abstractmethod
     def config_file_path(self) -> str:
         """Path to the application's config file. Must be implemented by subclasses."""
         pass
@@ -61,7 +67,8 @@ class ConfigCreator(ABC):
             mint_mcp_proxy_server = {
                 "command": APPLICATION_NAME,
                 "env": {
-                    "MCP_CONFIG_PATH": self.config_file_path
+                    "MCP_CONFIG_PATH": self.config_file_path,
+                    "MCP_CLIENT_NAME": self.app_name
                 }
             }
             logger.debug(f"Created mint_mcp_proxy_server config with path: {self.config_file_path}")

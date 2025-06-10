@@ -15,6 +15,10 @@ class ClaudeCodeMacMCPConfigEditor(ConfigCreator):
         super().__init__()
         self.config = config
         self.node_finder = NodeFinderMac()
+
+    @property
+    def app_name(self) -> str:
+        return "Claude Code"
   
     @property
     def config_file_path(self) -> str:

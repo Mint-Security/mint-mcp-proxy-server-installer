@@ -17,6 +17,10 @@ class WindsurfMacMCPConfigEditor(ConfigCreator):
         self.node_finder = NodeFinderMac()
 
     @property
+    def app_name(self) -> str:
+        return "Windsurf"
+
+    @property
     def config_file_path(self) -> str:
         logger.debug("config_file_path property called")
         return os.path.expanduser(self.CONFIG_FILE_PATH)
