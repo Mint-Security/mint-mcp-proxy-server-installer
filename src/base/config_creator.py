@@ -26,6 +26,31 @@ class ConfigCreator(ABC):
         """Path to the application's config file. Must be implemented by subclasses."""
         pass
     
+    def _create_backup(self) -> bool:
+        """Create a backup of the config file before modifying it."""
+        try:
+            config_dir = os.path.dirname(self.config_file_path)
+            config_filename = os.path.basename(self.config_file_path)
+            
+            # Create backup filename
+            backup_filename = f"{config_filename}.backup"
+            backup_path = os.path.join(config_dir, backup_filename)
+            
+            # If backup already exists, remove it first
+            if os.path.exists(backup_path):
+                os.remove(backup_path)
+                logger.debug(f"Removed existing backup file: {backup_path}")
+            
+            # Copy the original config file to backup
+            shutil.copy2(self.config_file_path, backup_path)
+            logger.info(f"Created backup of config file at: {backup_path}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Error creating backup of config file: {e}")
+            logger.exception("Exception details:")
+            return False
+    
     def _mint_proxy_already_installed(self) -> bool:
         logger.debug(f"Checking if mint proxy is already installed in: {self.config_file_path}")
         try:
@@ -54,6 +79,11 @@ class ConfigCreator(ABC):
             if self._mint_proxy_already_installed():
                 logger.info("MCP proxy already installed, skipping update")
                 return False
+            
+            # Create backup before modifying the config
+            logger.info("Creating backup of config file...")
+            if not self._create_backup():
+                logger.warning("Failed to create backup, but continuing with installation")
             
             logger.info("Updating config file with our MCP server")
             # read the config file

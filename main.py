@@ -1,5 +1,7 @@
 import sys
 import argparse
+import shutil
+from datetime import datetime
 from src.utils.os_utils import get_current_os, OperatingSystem
 from src.utils.node_finder.mac import NodeFinderMac, NodeNotFoundError
 from src.installers.cursor.mac.installer import CursorMacInstaller
@@ -14,7 +16,7 @@ import os
 logger = get_logger(__name__)
 
 def print_welcome():
-    print("\n=== Mint Security Supervisor Installer ===\n")
+    print("\n=== Mint Security Proxy Installer ===\n")
 
 installer_objects = {
     "cursor": {
@@ -62,16 +64,20 @@ def find_node(os_type):
         print(f"Error: {e}")
         sys.exit(1)
 
-def print_menu():
-    print("\nWhat would you like to install?")
+def print_client_menu(title, show_install_all=False):
+    print(f"\n{title}")
     print("1. Cursor")
     print("2. Claude Desktop")
     print("3. Claude Code")
     print("4. Windsurf")
-    print("5. Install on All")
+    if show_install_all:
+        print("5. Install on All")
 
-def get_user_selection():
-    options = {"1": "Cursor", "2": "Claude Desktop", "3": "Claude Code", "4": "Windsurf", "5": "Install on All"}
+def get_client_selection(show_install_all=False):
+    options = {"1": "Cursor", "2": "Claude Desktop", "3": "Claude Code", "4": "Windsurf"}
+    if show_install_all:
+        options["5"] = "Install on All"
+    
     choice = input("Enter the number of your choice: ").strip()
     selected = options.get(choice)
     if selected:
@@ -111,9 +117,93 @@ def uninstall_all(os_type):
     else:
         print("Failed to remove installation folders")
 
+
+
+def get_backup_info(backup_path):
+    """Get backup file creation time information."""
+    try:
+        if os.path.exists(backup_path):
+            # Get file modification time
+            mtime = os.path.getmtime(backup_path)
+            backup_date = datetime.fromtimestamp(mtime).strftime("%Y-%m-%d %H:%M:%S")
+            return backup_date
+        return None
+    except Exception as e:
+        logger.error(f"Error getting backup info: {e}")
+        return None
+
+def revert_client(os_type):
+    """Revert a client configuration from backup."""
+    print("\n=== Revert Client Configuration ===\n")
+    
+    print_client_menu("Which client would you like to revert?")
+    selection = get_client_selection()
+    if not selection:
+        sys.exit(1)
+    
+    os_key = os_type.name.lower()
+    app_key = selection.lower().replace(' ', '-')
+    installer = installer_objects.get(app_key, {}).get(os_key)
+    
+    if not installer:
+        print(f"No installer available for {selection} on {os_type.name}")
+        return
+    
+    # Get backup file path
+    config_path = installer.config_creator.config_file_path
+    config_dir = os.path.dirname(config_path)
+    config_filename = os.path.basename(config_path)
+    backup_path = os.path.join(config_dir, f"{config_filename}.backup")
+    
+    # Check if backup exists
+    if not os.path.exists(backup_path):
+        print(f"No backup file found for {selection}")
+        print("Cannot proceed with revert.")
+        return
+    
+    # Get backup creation date
+    backup_date = get_backup_info(backup_path)
+    if backup_date:
+        print(f"\nNOTE: The revert will restore the config file from backup created on {backup_date}")
+    else:
+        print(f"\nNOTE: The revert will restore the config file from the available backup")
+    
+    # Ask for user confirmation
+    confirm = input("Do you want to proceed with the revert? (y/N): ").strip().lower()
+    if confirm not in ['y', 'yes']:
+        print("Revert operation cancelled.")
+        return
+    
+    try:
+        # Check if currently installed and uninstall if needed
+        if installer.is_client_installed():
+            print(f"Uninstalling {selection} first...")
+            if not installer.run_client_uninstallation():
+                print(f"Failed to uninstall {selection}")
+                return
+            print(f"Successfully uninstalled {selection}")
+        else:
+            print(f"{selection} is not currently installed")
+        
+        # Copy backup file to override the original config
+        print(f"Restoring config file from backup...")
+        shutil.copy2(backup_path, config_path)
+        print(f"Successfully restored config file from backup")
+        print(f"Config file reverted to state from {backup_date if backup_date else 'backup'}")
+        
+        # Remove the backup file after successful revert
+        os.remove(backup_path)
+        
+        print(f"\n >>> NOTE: Please restart {installer.APP_NAME} for changes to take effect. <<<")
+        
+    except Exception as e:
+        print(f"Error during revert operation: {e}")
+        logger.error(f"Revert error: {e}")
+
 def main():
-    parser = argparse.ArgumentParser(description='Mint Security Supervisor Installer')
+    parser = argparse.ArgumentParser(description='Mint Security Proxy Installer')
     parser.add_argument('--uninstall', action='store_true', help='Uninstall all applications')
+    parser.add_argument('--revert', action='store_true', help='Revert a client configuration from backup')
     parser.add_argument('-d', '--debug', action='store_true', help='Enable debug logging')
     parser.add_argument('--download', action='store_true', help='Download the package from the remote URL (default: use local package)')
     args = parser.parse_args()
@@ -133,10 +223,14 @@ def main():
         if args.uninstall:
             uninstall_all(os_type)
             return
+        
+        if args.revert:
+            revert_client(os_type)
+            return
 
         find_node(os_type)
-        print_menu()
-        selection = get_user_selection()
+        print_client_menu("What would you like to install?", show_install_all=True)
+        selection = get_client_selection(show_install_all=True)
         if not selection:
             sys.exit(1)
         os_key = os_type.name.lower()

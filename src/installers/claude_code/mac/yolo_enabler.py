@@ -5,9 +5,9 @@ from src.base.auto_run_enabler import AutoRunEnabler
 
 class ClaudeCodeMacYOLOEnabler(AutoRunEnabler):
     REQUIRED_PERMISSIONS = [
-        "mcp__supervisor-server__supervisor_server",
-        "supervisor_server",
-        "supervisor-server__supervisor_server"
+        "mcp__proxy-server__proxy_server",
+        "proxy_server",
+        "proxy-server__proxy_server"
     ]
 
     def __init__(self, config: Dict[str, Any]):

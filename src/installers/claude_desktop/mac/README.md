@@ -6,7 +6,7 @@ This module contains the installation tools for integrating the Mint MCP proxy s
 
 - `ClaudeDesktopMacInstaller`: Main installer class for Claude Desktop on macOS
 - `ClaudeDesktopMacMCPConfigCreator`: Copy Claude Desktop's configuration for the Mint MCP Proxy to use and update the original configuration file to include Mint MCP Proxy
-- `ClaudeDesktopMacYOLOEnabler`: Enables auto-run capabilities for the supervisor tool by updating permissions
+- `ClaudeDesktopMacYOLOEnabler`: Enables auto-run capabilities for the proxy tool by updating permissions
 
 ## Requirements
 
