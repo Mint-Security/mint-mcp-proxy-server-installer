@@ -1,11 +1,11 @@
 import time
 import os
 import json
-from abc import ABC, abstractmethod
+from abc import ABC 
 from typing import Dict, Any
 from .auto_run_enabler import AutoRunEnabler
 from .config_creator import ConfigCreator
-from src.consts import PlatformName, AppName, DOWNLOAD_URLS, APPLICATION_DIR_NAME, APPLICATION_NAME, UNINSTALL_FOLDERS
+from src.consts import PlatformName, AppName, APPLICATION_DIR_NAME, APPLICATION_NAME, UNINSTALL_FOLDERS
 from pathlib import Path
 from src.utils.downloader import download_file
 import subprocess
@@ -47,10 +47,6 @@ class BaseInstaller(ABC):
             print(f"the os is not valid expected {OperatingSystem.MAC} but got {get_current_os()}")
             return False
         return True
-        
-    @abstractmethod
-    def kill_process(self) -> bool:
-        pass
 
     @staticmethod
     def uninstall_application() -> bool:
@@ -97,12 +93,15 @@ class BaseInstaller(ABC):
             return ""
 
     @staticmethod
-    def install_application(download_file_path: str) -> bool:
+    def install_application(file_path: str) -> bool:
         try:
-            download_file_path = BaseInstaller.download_application(DOWNLOAD_URLS[PlatformName.MAC])
+            if not os.path.exists(file_path):
+                logger.error(f"File path does not exist: {file_path}")
+                return False
+            
             # install the application
-            logger.info(f"Installing application from: {download_file_path}")
-            result = subprocess.run(["npm", "install", "-g", download_file_path], capture_output=True, text=True)
+            logger.info(f"Installing application from: {file_path}")
+            result = subprocess.run(["npm", "install", "-g", file_path], capture_output=True, text=True)
             logger.debug(f"Installation result: {result.returncode}")
             logger.debug(f"Installation stdout: {result.stdout}")
             logger.debug(f"Installation stderr: {result.stderr}")
@@ -112,7 +111,7 @@ class BaseInstaller(ABC):
             logger.debug(f"Application is installed: {is_installed}")
             return is_installed
         except Exception as e:
-            logger.error(f"Error installing {download_file_path}: {e}")
+            logger.error(f"Error installing {file_path}: {e}")
             logger.exception("Exception details:")
             return False
 
@@ -154,21 +153,12 @@ class BaseInstaller(ABC):
         return False
 
     def run_client_installation(self) -> bool:
-        if self.is_client_installed():
-            logger.info(f"{self.APP_NAME} is already installed")
-            return True
-        
         logger.info(f"Starting installation for {self.APP_NAME} on {self.PLATFORM_NAME}")
 
         # validate the application
         if not self.validate():
             logger.error("Validation failed. Cannot proceed with installation.")
             raise ValueError("Validation failed. Cannot proceed with installation.")
-        
-        # kill the process to make sure it's not running
-        if not self.kill_process():
-            logger.error("Could not kill the process. Cannot proceed with installation.")
-            raise ValueError("Could not kill the process. Cannot proceed with installation.")
         
         # update the config json of the target application
         logger.info("Creating configuration...")
@@ -197,14 +187,7 @@ class BaseInstaller(ABC):
         return True
     
     def run_client_uninstallation(self) -> bool:
-        if not self.is_client_installed():
-            logger.info(f"{APPLICATION_NAME} is not installed")
-            return True
-        
         logger.info(f"Starting uninstallation for {self.APP_NAME} on {self.PLATFORM_NAME}")
-        if not self.kill_process():
-            logger.error("Could not kill the process. Cannot proceed with uninstallation.")
-            raise ValueError("Could not kill the process. Cannot proceed with uninstallation.")
         
         # disable auto-run to make our mcp server autostart in the target application
         logger.info("Disabling auto-run...")

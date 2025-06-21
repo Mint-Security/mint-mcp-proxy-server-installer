@@ -1,12 +1,7 @@
-import subprocess
-import time
-from typing import Dict, Any
 import os
 import shutil
 from src.consts import AppName, PlatformName
-from src.utils.os_utils import get_current_os, OperatingSystem
 from src.base.base_installer import BaseInstaller
-
 from src.installers.claude_code.mac.mcp_config_creator import ClaudeCodeMacMCPConfigEditor
 from src.installers.claude_code.mac.yolo_enabler import ClaudeCodeMacYOLOEnabler
 
@@ -37,18 +32,5 @@ class ClaudeCodeMacInstaller(BaseInstaller):
             print(f"Claude Code is not installed {claude_code_installed_path1} {claude_code_installed_path2}")
             return False
         
-        return True    
-
-    def kill_process(self) -> bool:
-        try:
-            custom_path = "/usr/local/bin:" + os.environ.get("PATH", "")
-            # killing the cursor process before starting to run
-            os.system(f"pkill -f {shutil.which('Claude', path=custom_path)}")
-            os.system(f"pkill -f {shutil.which('claude', path=custom_path)}")
-            # Wait until it's closed
-            time.sleep(0.5)
-            return True
-        except Exception as e:
-            print(f"Error killing claude code process: {e}")
-            return False
+        return True
 

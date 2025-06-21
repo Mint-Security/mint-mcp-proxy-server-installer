@@ -8,7 +8,8 @@ from src.installers.claude_code.mac.installer import ClaudeCodeMacInstaller
 from src.installers.windsurf.mac.installer import WindsurfMacInstaller
 from src.base.base_installer import BaseInstaller
 from src.utils.logger import configure_logger, LogLevel, get_logger
-from src.consts import DOWNLOAD_URLS, PlatformName
+from src.consts import DOWNLOAD_URLS, PlatformName, PACKAGE_NAME
+import os
 # Create a logger for this module
 logger = get_logger(__name__)
 
@@ -93,8 +94,12 @@ def uninstall_all(os_type):
             installer = os_map.get(os_key)
             if installer:
                 print(f"Uninstalling {app.replace('-', ' ').title()}...")
+                if not installer.is_client_installed():
+                    print(f"{app.replace('-', ' ').title()} is not installed, skipping uninstallation")
+                    continue
                 if installer.run_client_uninstallation():
                     print(f"Successfully uninstalled {app.replace('-', ' ').title()}")
+                    print(f" >>> NOTE: In order for the uninstallation to take effect, restart {installer.APP_NAME}. <<<")
                 else:
                     print(f"Failed to uninstall {app.replace('-', ' ').title()}")
         except Exception as e:
@@ -110,6 +115,7 @@ def main():
     parser = argparse.ArgumentParser(description='Mint Security Supervisor Installer')
     parser.add_argument('--uninstall', action='store_true', help='Uninstall all applications')
     parser.add_argument('-d', '--debug', action='store_true', help='Enable debug logging')
+    parser.add_argument('--download', action='store_true', help='Download the package from the remote URL (default: use local package)')
     args = parser.parse_args()
 
     # Configure logger
@@ -135,13 +141,22 @@ def main():
             sys.exit(1)
         os_key = os_type.name.lower()
         
-        # Download the application
-        download_file_path = BaseInstaller.download_application(DOWNLOAD_URLS[PlatformName.MAC])
-        if not download_file_path:
+        # Download or use local application package
+        if args.download:
+            package_path = BaseInstaller.download_application(DOWNLOAD_URLS[PlatformName.MAC])
+            logger.info(f"Downloaded package to: {package_path}")
+        else:
+
+            package_path = os.path.abspath(PACKAGE_NAME)
+            if not os.path.exists(package_path):
+                print(f"Local package {package_path} not found.")
+                sys.exit(1)
+            logger.info(f"Using local package: {package_path}")
+        if not package_path:
             sys.exit(1)
 
         # Install the application (npm package of mint-mcp-proxy-server)
-        BaseInstaller.install_application(download_file_path)
+        BaseInstaller.install_application(package_path)
 
         #"Install on All" option removed as there's only one option now
         if selection == "Install on All":
@@ -149,9 +164,13 @@ def main():
                 try:
                     installer = os_map.get(os_key)
                     if installer:
+                        if installer.is_client_installed():
+                            print(f"{app.replace('-', ' ').title()} is already installed, skipping installation. Please uninstall it first.")
+                            continue
                         print(f"Running installation for {app.replace('-', ' ').title()} on {os_type.name}")
                         installer.run_client_installation()
                         print(f"Installation for {app.replace('-', ' ').title()} on {os_type.name} completed")
+                        print(f" >>> NOTE: In order for the installation to take effect, restart {installer.APP_NAME}. <<<")
                 except Exception as e:
                     print(f"Error installing {app} on {os_type.name}: {e}")
         else:
@@ -159,9 +178,13 @@ def main():
                 app_key = selection.lower().replace(' ', '-')
                 installer = installer_objects.get(app_key, {}).get(os_key)
                 if installer:
+                    if installer.is_client_installed():
+                        print(f"{selection} is already installed, skipping installation. Please uninstall it first.")
+                        return
                     print(f"Running installation for {selection} on {os_type.name}")
                     installer.run_client_installation()
                     print(f"Installation for {selection} on {os_type.name} completed")
+                    print(f" >>> NOTE: In order for the installation to take effect, restart {installer.APP_NAME}. <<<")
                 else:
                     print(f"No installer available for {selection} on {os_type.name}")
             except Exception as e:

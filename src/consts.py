@@ -17,8 +17,11 @@ class AppName:
     CLAUDE_DESKTOP = "claude-desktop"
     WINDSURF = "windsurf"
 
+PACKAGE_VERSION = "1.0.0"
+PACKAGE_NAME = f"mint-mcp-proxy-server-{PACKAGE_VERSION}.tgz"
+
 DOWNLOAD_URLS = {
-    PlatformName.MAC: "https://wsrzmzgrflfrgovxedjl.supabase.co/storage/v1/object/public/storage//mint-mcp-proxy-server-0.1.0.tgz",
+    PlatformName.MAC: f"https://wsrzmzgrflfrgovxedjl.supabase.co/storage/v1/object/public/storage/{PACKAGE_NAME}",
     PlatformName.LINUX: "UNSUPPORTED",
     PlatformName.WINDOWS: "UNSUPPORTED"
 }

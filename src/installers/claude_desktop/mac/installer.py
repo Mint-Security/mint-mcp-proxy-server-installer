@@ -1,11 +1,6 @@
-import subprocess
-import time
-from typing import Dict, Any
 import os
 from src.consts import AppName, PlatformName
-from src.utils.os_utils import get_current_os, OperatingSystem
 from src.base.base_installer import BaseInstaller
-
 from src.installers.claude_desktop.mac.mcp_config_creator import ClaudeDesktopMacMCPConfigCreator
 from src.installers.claude_desktop.mac.yolo_enabler import ClaudeDesktopMacYOLOEnabler
 
@@ -35,18 +30,3 @@ class ClaudeDesktopMacInstaller(BaseInstaller):
             return False
         
         return True
-
-    def kill_process(self) -> bool:
-        try:
-            # killing the claude process before starting to run
-            os.system("osascript -e 'quit app \"Claude\"'")
-            # Wait until it's closed
-            while subprocess.run(["pgrep", "-x", "Claude"], stdout=subprocess.DEVNULL).returncode == 0:
-                time.sleep(1)
-
-            # Wait until it's closed
-            time.sleep(0.5)
-            return True
-        except Exception as e:
-            print(f"Error killing claude desktop process: {e}")
-            return False

@@ -1,11 +1,6 @@
-import time
-from typing import Dict, Any
 import os
-import subprocess
 import shutil
-from src.utils.os_utils import get_current_os, OperatingSystem
 from src.base.base_installer import BaseInstaller
-
 from src.installers.cursor.mac.mcp_config_creator import CursorMacMCPConfigEditor
 from src.installers.cursor.mac.yolo_enabler import CursorMacYOLOEnabler
 from src.consts import PlatformName, AppName
@@ -38,16 +33,3 @@ class CursorMacInstaller(BaseInstaller):
             return False
         
         return True
-
-    def kill_process(self) -> bool:
-        try:
-            os.system("osascript -e 'quit app \"Cursor\"'")
-            # Wait until it's closed
-            while subprocess.run(["pgrep", "-x", "Cursor"], stdout=subprocess.DEVNULL).returncode == 0:
-                time.sleep(1)
-            return True
-        except Exception as e:
-            print(f"Error killing cursor process: {e}")
-            return False
-
-       
