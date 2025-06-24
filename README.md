@@ -50,6 +50,12 @@ For debugging information:
 python main.py -d
 ```
 
+To revert configuration changes (Override the current configuration with a backup file):
+
+```
+python main.py --revert
+```
+
 To uninstall:
 
 ```

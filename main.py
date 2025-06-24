@@ -10,13 +10,13 @@ from src.installers.claude_code.mac.installer import ClaudeCodeMacInstaller
 from src.installers.windsurf.mac.installer import WindsurfMacInstaller
 from src.base.base_installer import BaseInstaller
 from src.utils.logger import configure_logger, LogLevel, get_logger
-from src.consts import DOWNLOAD_URLS, PlatformName, PACKAGE_NAME
+from src.consts import DOWNLOAD_URLS, PlatformName, PACKAGE_NAME, PACKAGE_VERSION
 import os
 # Create a logger for this module
 logger = get_logger(__name__)
 
 def print_welcome():
-    print("\n=== Mint Security Proxy Installer ===\n")
+    print(f"\n=== Mint Security Proxy Installer ({PACKAGE_VERSION}) ===\n")
 
 installer_objects = {
     "cursor": {
