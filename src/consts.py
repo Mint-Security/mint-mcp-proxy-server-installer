@@ -17,7 +17,7 @@ class AppName:
     CLAUDE_DESKTOP = "claude-desktop"
     WINDSURF = "windsurf"
 
-PACKAGE_VERSION = "1.0.0"
+PACKAGE_VERSION = "2.0.0"
 PACKAGE_NAME = f"mint-mcp-proxy-server-{PACKAGE_VERSION}.tgz"
 
 DOWNLOAD_URLS = {

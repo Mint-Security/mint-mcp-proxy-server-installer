@@ -51,15 +51,52 @@ class ConfigCreator(ABC):
             logger.exception("Exception details:")
             return False
     
+    def _wrap_mcp_server_with_proxy(self, server_config: dict) -> dict:
+        """
+        Wrap an existing MCP server configuration with our proxy.
+        """
+        return {
+            "command": APPLICATION_NAME,
+            "env": {
+                "MCP_CONFIG_PATH": self.config_file_path,
+                "MCP_CLIENT_NAME": self.app_name,
+                "NO_TOOLS": "true"
+            },
+            "inner": server_config
+        }
+    
+    def _is_wrapped_by_proxy(self, server_config: dict) -> bool:
+        """
+        Check if a server config is already wrapped by our proxy.
+        """
+        return (
+            server_config.get("command") == APPLICATION_NAME and
+            "inner" in server_config and
+            server_config.get("env", {}).get("NO_TOOLS") == "true"
+        )
+    
+    def _is_our_main_proxy(self, server_config: dict) -> bool:
+        """
+        Check if a server config is our main proxy (without NO_TOOLS).
+        """
+        return (
+            server_config.get("command") == APPLICATION_NAME and
+            "inner" not in server_config and
+            server_config.get("env", {}).get("NO_TOOLS") != "true"
+        )
+    
     def _mint_proxy_already_installed(self) -> bool:
         logger.debug(f"Checking if mint proxy is already installed in: {self.config_file_path}")
         try:
             with open(self.config_file_path, 'r') as f:
                 config = json.load(f)
             logger.debug(f"Config contents: {config}")
-            installed = APPLICATION_NAME in config.get('mcpServers', {})
-            logger.debug(f"Mint proxy already installed: {installed}")
-            return installed
+            
+            # Check if our main proxy exists in mcpServers
+            has_main_proxy = APPLICATION_NAME in config.get('mcpServers', {})
+            
+            logger.debug(f"Mint proxy already installed: {has_main_proxy}")
+            return has_main_proxy
         except Exception as e:
             logger.error(f"Error checking if mint proxy is installed: {e}")
             logger.exception("Exception details:")
@@ -90,10 +127,21 @@ class ConfigCreator(ABC):
             with open(self.config_file_path, 'r') as f:
                 config = json.load(f)
 
-            # Store original mcpServers as backup
-            config['mintMcpServers'] = config.get('mcpServers', {})
-            config['mcpServers'] = {}
+            # Ensure mcpServers exists
+            if 'mcpServers' not in config:
+                config['mcpServers'] = {}
 
+            # Store existing servers to wrap them later
+            existing_servers = {}
+            for server_name, server_config in list(config['mcpServers'].items()):
+                # Skip if already wrapped by our proxy or if it's our main proxy
+                if not self._is_wrapped_by_proxy(server_config) and not self._is_our_main_proxy(server_config):
+                    existing_servers[server_name] = server_config
+
+            # Create new mcpServers dict with our main proxy first
+            new_mcp_servers = {}
+            
+            # Add our main proxy first (at the top)
             mint_mcp_proxy_server = {
                 "command": APPLICATION_NAME,
                 "env": {
@@ -102,8 +150,19 @@ class ConfigCreator(ABC):
                 }
             }
             logger.debug(f"Created mint_mcp_proxy_server config with path: {self.config_file_path}")
-            
-            config['mcpServers'][APPLICATION_NAME] = mint_mcp_proxy_server
+            new_mcp_servers[APPLICATION_NAME] = mint_mcp_proxy_server
+
+            # Add wrapped existing servers
+            for server_name, server_config in existing_servers.items():
+                new_mcp_servers[server_name] = self._wrap_mcp_server_with_proxy(server_config)
+
+            # Add any servers that were already wrapped or are already our proxy
+            for server_name, server_config in config['mcpServers'].items():
+                if server_name not in new_mcp_servers:
+                    new_mcp_servers[server_name] = server_config
+
+            # Replace the mcpServers with the new ordered dict
+            config['mcpServers'] = new_mcp_servers
 
             # Overwrite the config file with the new config
             logger.debug(f"Writing new config to: {self.config_file_path}")
@@ -129,11 +188,20 @@ class ConfigCreator(ABC):
             with open(self.config_file_path, 'r') as f:
                 config = json.load(f)
 
-            # Remove mintMcpServers property entirely instead of setting it to {}
-            if 'mintMcpServers' in config:
-                # restore the original config file
-                config['mcpServers'] = config['mintMcpServers']
-                del config['mintMcpServers']
+            # Handle mcpServers restoration
+            if 'mcpServers' in config:
+                servers_to_remove = []
+                for server_name, server_config in list(config['mcpServers'].items()):
+                    if self._is_wrapped_by_proxy(server_config):
+                        # Restore the original server config from the 'inner' key
+                        config['mcpServers'][server_name] = server_config['inner']
+                    elif self._is_our_main_proxy(server_config):
+                        # Mark our main proxy for removal
+                        servers_to_remove.append(server_name)
+                
+                # Remove our main proxy
+                for server_name in servers_to_remove:
+                    del config['mcpServers'][server_name]
                 
             # Write the updated config back to the file
             with open(self.config_file_path, 'w') as f:

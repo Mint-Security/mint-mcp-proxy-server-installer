@@ -144,8 +144,8 @@ class BaseInstaller(ABC):
         with open(config_file_path, "r") as f:
             config = json.load(f)
         
-        #if config include "mint-mcp-proxy-server" in the "clients" array
-        if "mint-mcp-proxy-server" in config.get("mcpServers", []):
+        # Check if our main proxy exists in mcpServers
+        if APPLICATION_NAME in config.get("mcpServers", {}):
             logger.debug(f"{self.APP_NAME} is installed")
             return True
         
